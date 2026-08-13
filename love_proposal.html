@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Forever Starts Here</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;overflow:hidden;font-family:'Cormorant Garamond',Georgia,serif;color:#fff;width:100vw;height:100vh;cursor:default}
+#canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:10;pointer-events:none;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.overlay.interactive{pointer-events:auto}
+.text-reveal{font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.5rem,4vw,3rem);font-weight:300;letter-spacing:0.05em;text-align:center;opacity:0;text-shadow:0 0 30px rgba(255,107,157,0.5),0 0 60px rgba(255,107,157,0.2);padding:0 2rem;line-height:1.6}
+.text-reveal.emphasis{font-size:clamp(2rem,6vw,4.5rem);font-weight:600;background:linear-gradient(135deg,#fff 0%,#ff6b9d 50%,#fdcb6e 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 20px rgba(255,107,157,0.4))}
+.glass-btn{background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:1rem 2.5rem;font-family:'Cormorant Garamond',serif;font-size:1.2rem;letter-spacing:0.1em;border-radius:50px;cursor:pointer;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden;margin:0.5rem;box-shadow:0 0 20px rgba(255,107,157,0.1)}
+.glass-btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent);transition:left 0.6s}
+.glass-btn:hover::before{left:100%}
+.glass-btn:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,107,157,0.5);box-shadow:0 0 30px rgba(255,107,157,0.3),inset 0 0 20px rgba(255,107,157,0.05);transform:translateY(-2px)}
+.glass-btn.yes-btn{background:rgba(255,107,157,0.15);border-color:rgba(255,107,157,0.4);font-size:1.4rem;padding:1.2rem 3rem}
+.glass-btn.yes-btn:hover{background:rgba(255,107,157,0.25);box-shadow:0 0 40px rgba(255,107,157,0.4),inset 0 0 30px rgba(255,107,157,0.1)}
+.glass-btn.no-btn{background:rgba(100,100,100,0.1);border-color:rgba(255,255,255,0.1);font-size:1rem;transition:all 0.2s ease}
+.btn-container{display:flex;gap:2rem;margin-top:2rem;flex-wrap:wrap;justify-content:center;align-items:center}
+#loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:1000;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.loading-text{font-family:'Playfair Display',serif;font-size:1.2rem;letter-spacing:0.3em;color:rgba(255,255,255,0.5);margin-top:2rem}
+.loading-heart{width:40px;height:40px;position:relative;animation:heartbeat 1.5s ease-in-out infinite}
+.loading-heart::before,.loading-heart::after{content:'';position:absolute;width:20px;height:32px;background:linear-gradient(135deg,#ff6b9d,#c44569);border-radius:20px 20px 0 0;transform-origin:bottom center}
+.loading-heart::before{left:20px;transform:rotate(-45deg)}
+.loading-heart::after{left:0;transform:rotate(45deg)}
+@keyframes heartbeat{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+#music-btn{position:fixed;bottom:2rem;right:2rem;z-index:100;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:all 0.3s;opacity:0}
+#music-btn:hover{background:rgba(255,107,157,0.2);border-color:rgba(255,107,157,0.4);box-shadow:0 0 20px rgba(255,107,157,0.3)}
+#music-btn.visible{opacity:1}
+.vignette{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;background:radial-gradient(ellipse at center,transparent 0%,transparent 50%,rgba(0,0,0,0.6) 100%)}
+.section{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;opacity:0;pointer-events:none;z-index:20}
+.section.active{opacity:1;pointer-events:auto}
+.proposal-heart{font-size:clamp(4rem,12vw,10rem);margin-bottom:1rem;filter:drop-shadow(0 0 30px rgba(255,107,157,0.6));animation:heartbeat 2s ease-in-out infinite}
+.sub-text{font-size:clamp(1rem,2.5vw,1.5rem);color:rgba(255,255,255,0.7);margin-top:1rem;font-style:italic}
+.celebration-text{font-size:clamp(2.5rem,8vw,6rem);font-weight:700;background:linear-gradient(135deg,#fff 0%,#ff6b9d 30%,#fdcb6e 60%,#fff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 30px rgba(255,107,157,0.5));text-align:center}
+.hidden{display:none!important}
+@media(max-width:768px){.btn-container{flex-direction:column;gap:1rem}.glass-btn{padding:0.8rem 2rem;font-size:1rem}}
+</style>
+</head>
+<body>
+<div id="loading-screen"><div class="loading-heart"></div><div class="loading-text">PREPARING SOMETHING SPECIAL</div></div>
+<canvas id="canvas"></canvas>
+<div class="vignette"></div>
+<button id="music-btn" onclick="toggleMusic()">🎵</button>
+
+<div id="stage-flower" class="overlay"><div id="flower-text" class="text-reveal"></div></div>
+
+<div id="stage-question" class="section">
+<div class="proposal-heart">❤️</div>
+<div class="text-reveal emphasis">Will you be mine?</div>
+<div class="sub-text" id="question-sub"></div>
+<div class="btn-container">
+<button class="glass-btn yes-btn" onclick="handleYes()">YES ❤️</button>
+<button class="glass-btn no-btn" id="no-btn" onmouseover="escapeNo()" onclick="escapeNo()">NO 🥺</button>
+</div>
+</div>
+
+<div id="stage-celebration" class="section">
+<div class="celebration-text" id="celebration-main"></div>
+<div class="sub-text" id="celebration-sub"></div>
+</div>
+
+<div id="stage-final" class="section">
+<div class="celebration-text">I LOVE YOU ❤️</div>
+<div class="text-reveal" style="margin-top:2rem">Will you stay with me?</div>
+<div class="sub-text" id="final-sub" style="margin-top:1rem"></div>
+<button class="glass-btn yes-btn" style="margin-top:2rem" onclick="handleForever()">YES, FOREVER ❤️</button>
+</div>
+
+<div id="stage-ultimate" class="section">
+<div class="celebration-text" style="font-size:clamp(2rem,7vw,5rem)">OUR FOREVER STARTS HERE ❤️</div>
+</div>
+
+<script>
+// ==================== AUDIO ====================
+let audioCtx=null,musicPlaying=false,musicInterval=null;
+function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+function createTone(freq,time,dur,type='sine',vol=0.08){
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(0,time);
+  g.gain.linearRampToValueAtTime(vol,time+0.5);
+  g.gain.exponentialRampToValueAtTime(0.001,time+dur);
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start(time);o.stop(time+dur);
+}
+function playAmbientMusic(){
+  if(!audioCtx)initAudio();if(musicPlaying)return;
+  musicPlaying=true;
+  const chords=[[261.63,329.63,392],[220,277.18,329.63],[246.94,311.13,369.99],[196,246.94,293.66]];
+  let idx=0;
+  function next(){if(!musicPlaying)return;chords[idx%chords.length].forEach(f=>createTone(f,audioCtx.currentTime,4,'sine',0.06));idx++;}
+  next();musicInterval=setInterval(next,3500);
+  document.getElementById('music-btn').textContent='🔊';
+}
+function stopMusic(){musicPlaying=false;if(musicInterval)clearInterval(musicInterval);document.getElementById('music-btn').textContent='🔇';}
+function toggleMusic(){if(!audioCtx)initAudio();if(musicPlaying)stopMusic();else playAmbientMusic();}
+function playChime(){if(!audioCtx)initAudio();const t=audioCtx.currentTime;[523.25,659.25,783.99,1046.5].forEach((f,i)=>createTone(f,t+i*0.1,2,'sine',0.1));}
+function playCelebrationSound(){if(!audioCtx)initAudio();const t=audioCtx.currentTime;for(let i=0;i<8;i++)createTone(400+Math.random()*800,t+i*0.15,1.5,'sine',0.08);}
+
+// ==================== CANVAS ====================
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+let W,H;
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+resize();window.addEventListener('resize',resize);
+const rand=(a,b)=>a+Math.random()*(b-a);
+
+class Branch{
+  constructor(x,y,angle,length,thickness,depth,parent=null,delay=0){
+    this.startX=x;this.startY=y;this.angle=angle;
+    this.targetLength=length;this.thickness=thickness;this.depth=depth;
+    this.parent=parent;this.delay=delay;this.progress=0;
+    this.growthSpeed=rand(0.15,0.35);this.finished=false;
+    this.hasSpawned=false;this.children=[];this.buds=[];
+    this.endX=x+Math.cos(angle)*length;this.endY=y+Math.sin(angle)*length;
+    const mx=(x+this.endX)/2,my=(y+this.endY)/2;
+    const pa=angle+Math.PI/2,cv=(Math.random()-0.5)*length*0.5;
+    this.controlX=mx+Math.cos(pa)*cv;this.controlY=my+Math.sin(pa)*cv;
+    this.currentEndX=x;this.currentEndY=y;
+  }
+  update(dt,time){
+    if(this.delay>0){this.delay-=dt;return;}
+    if(!this.finished){
+      this.progress+=this.growthSpeed*dt;
+      if(this.progress>=1){this.progress=1;this.finished=true;}
+      const t=this.progress,mt=1-t;
+      this.currentEndX=mt*mt*this.startX+2*mt*t*this.controlX+t*t*this.endX;
+      this.currentEndY=mt*mt*this.startY+2*mt*t*this.controlY+t*t*this.endY;
+    }
+    if(this.finished&&!this.hasSpawned&&this.depth>0){this.spawnChildren();this.hasSpawned=true;}
+    if(this.finished&&this.buds.length===0)this.spawnBuds();
+    this.children.forEach(c=>c.update(dt,time));
+    this.buds.forEach(b=>b.update(dt,time));
+  }
+  spawnChildren(){
+    const count=this.depth>1?Math.floor(rand(2,4)):0;
+    for(let i=0;i<count;i++){
+      const aOff=(Math.random()-0.5)*1.8;
+      this.children.push(new Branch(this.currentEndX,this.currentEndY,this.angle+aOff,this.targetLength*rand(0.45,0.75),this.thickness*0.6,this.depth-1,this,rand(0.2,0.8)));
+    }
+  }
+  spawnBuds(){
+    this.buds.push(new Bud(this.currentEndX,this.currentEndY,this,rand(0.5,2)));
+    if(this.targetLength>50){
+      const t=rand(0.25,0.75),mt=1-t;
+      const bx=mt*mt*this.startX+2*mt*t*this.controlX+t*t*this.endX;
+      const by=mt*mt*this.startY+2*mt*t*this.controlY+t*t*this.endY;
+      this.buds.push(new Bud(bx,by,this,rand(1,3)));
+    }
+    if(this.targetLength>100&&Math.random()>0.3){
+      const t=rand(0.3,0.7),mt=1-t;
+      const bx=mt*mt*this.startX+2*mt*t*this.controlX+t*t*this.endX;
+      const by=mt*mt*this.startY+2*mt*t*this.controlY+t*t*this.endY;
+      this.buds.push(new Bud(bx,by,this,rand(2,4)));
+    }
+  }
+  render(ctx,time){
+    if(this.delay>0)return;
+    const t=this.progress,mt=1-t;
+    const cx=mt*mt*this.startX+2*mt*t*this.controlX+t*t*this.endX;
+    const cy=mt*mt*this.startY+2*mt*t*this.controlY+t*t*this.endY;
+    ctx.beginPath();ctx.moveTo(this.startX,this.startY);
+    ctx.quadraticCurveTo(this.controlX,this.controlY,cx,cy);
+    const r=45+this.depth*12,g=25+this.depth*8,b=10+this.depth*5;
+    ctx.strokeStyle=`rgb(${r},${g},${b})`;
+    ctx.lineWidth=this.thickness*(1-t*0.2);ctx.lineCap='round';ctx.stroke();
+    if(this.finished&&this.thickness>2){
+      ctx.fillStyle=`rgba(${r+20},${g+10},${b+5},0.3)`;
+      for(let i=0;i<3;i++){
+        const dt=rand(0.2,0.8),dmt=1-dt;
+        const dx=dmt*dmt*this.startX+2*dmt*dt*this.controlX+dt*dt*this.endX;
+        const dy=dmt*dmt*this.startY+2*dmt*dt*this.controlY+dt*dt*this.endY;
+        ctx.beginPath();ctx.arc(dx+rand(-2,2),dy+rand(-2,2),rand(0.5,1.5),0,Math.PI*2);ctx.fill();
+      }
+    }
+    this.children.forEach(c=>c.render(ctx,time));
+    this.buds.forEach(b=>b.render(ctx,time));
+  }
+}
+
+class Bud{
+  constructor(x,y,branch,delay=0){
+    this.x=x;this.y=y;this.branch=branch;this.delay=delay;
+    this.size=0;this.maxSize=rand(3,6);this.state='growing';
+    this.growthSpeed=rand(0.5,0.9);this.bloomDelay=rand(0.8,2.5);
+    this.bloomTimer=0;this.flower=null;this.swayOff=rand(0,Math.PI*2);
+  }
+  update(dt,time){
+    if(this.delay>0){this.delay-=dt;return;}
+    if(this.state==='growing'){
+      this.size+=this.growthSpeed*dt*10;
+      if(this.size>=this.maxSize){this.size=this.maxSize;this.state='waiting';}
+    }else if(this.state==='waiting'){
+      this.bloomTimer+=dt;
+      if(this.bloomTimer>=this.bloomDelay){this.state='blooming';this.flower=new Flower(this.x,this.y);}
+    }else if(this.state==='blooming'){
+      this.flower.update(dt);
+      if(this.flower.isOpen)this.state='bloomed';
+    }else if(this.state==='bloomed'){
+      this.flower.update(dt);
+    }
+  }
+  render(ctx,time){
+    if(this.delay>0)return;
+    if(this.state==='growing'||this.state==='waiting'){
+      ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+      ctx.fillStyle='#6b3a1f';ctx.fill();
+      ctx.strokeStyle='#8b5a3a';ctx.lineWidth=0.5;ctx.stroke();
+    }
+    if(this.flower)this.flower.render(ctx,time);
+  }
+}
+
+class Flower{
+  constructor(x,y){
+    this.x=x;this.y=y;this.scale=0;this.targetScale=rand(0.7,1.1);
+    this.openSpeed=rand(0.3,0.5);this.rotation=rand(0,Math.PI*2);
+    this.swayOff=rand(0,Math.PI*2);this.swaySpeed=rand(0.4,0.8);
+    this.isOpen=false;this.layer=Math.random()>0.5?'front':'back';
+    this.opacity=this.layer==='back'?0.55:1;
+    this.petalColor={r:255,g:rand(130,180),b:rand(150,200)};
+    this.innerColor={r:255,g:rand(180,220),b:rand(200,240)};
+  }
+  update(dt){
+    if(this.scale<this.targetScale){
+      this.scale+=this.openSpeed*dt;
+      if(this.scale>=this.targetScale){this.scale=this.targetScale;this.isOpen=true;}
+    }
+  }
+  render(ctx,time){
+    const sway=Math.sin((time||0)*this.swaySpeed+this.swayOff)*0.06;
+    ctx.save();
+    ctx.translate(this.x,this.y);ctx.rotate(this.rotation+sway);
+    ctx.scale(this.scale,this.scale);ctx.globalAlpha=this.opacity;
+    for(let i=0;i<5;i++){
+      const ang=(Math.PI*2/5)*i;
+      ctx.save();ctx.rotate(ang);
+      ctx.beginPath();ctx.moveTo(0,0);
+      ctx.bezierCurveTo(-14,-18,-16,-38,0,-52);
+      ctx.bezierCurveTo(16,-38,14,-18,0,0);
+      const g=ctx.createLinearGradient(0,0,0,-52);
+      g.addColorStop(0,`rgb(${this.petalColor.r},${this.petalColor.g-50},${this.petalColor.b-50})`);
+      g.addColorStop(0.4,`rgb(${this.petalColor.r},${this.petalColor.g},${this.petalColor.b})`);
+      g.addColorStop(1,'rgb(255,230,240)');
+      ctx.fillStyle=g;ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=0.5;ctx.stroke();
+      ctx.restore();
+    }
+    for(let i=0;i<5;i++){
+      const ang=(Math.PI*2/5)*i+Math.PI/5;
+      ctx.save();ctx.rotate(ang);ctx.scale(0.6,0.6);
+      ctx.beginPath();ctx.moveTo(0,0);
+      ctx.bezierCurveTo(-10,-14,-12,-30,0,-40);
+      ctx.bezierCurveTo(12,-30,10,-14,0,0);
+      const g=ctx.createLinearGradient(0,0,0,-40);
+      g.addColorStop(0,`rgb(${this.innerColor.r},${this.innerColor.g-30},${this.innerColor.b-30})`);
+      g.addColorStop(0.5,`rgb(${this.innerColor.r},${this.innerColor.g},${this.innerColor.b})`);
+      g.addColorStop(1,'rgb(255,245,250)');
+      ctx.fillStyle=g;ctx.fill();
+      ctx.restore();
+    }
+    ctx.shadowColor='rgba(255,200,100,0.6)';ctx.shadowBlur=20;
+    ctx.beginPath();ctx.arc(0,0,7,0,Math.PI*2);
+    const cg=ctx.createRadialGradient(0,0,0,0,0,7);
+    cg.addColorStop(0,'#fff9e6');cg.addColorStop(0.4,'#ffd93d');cg.addColorStop(1,'#f39c12');
+    ctx.fillStyle=cg;ctx.fill();ctx.shadowBlur=0;
+    for(let i=0;i<6;i++){
+      const a=(Math.PI*2/6)*i;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(a)*5,Math.sin(a)*5);
+      ctx.strokeStyle='#d4a017';ctx.lineWidth=1;ctx.stroke();
+      ctx.beginPath();ctx.arc(Math.cos(a)*5,Math.sin(a)*5,1.5,0,Math.PI*2);
+      ctx.fillStyle='#fff5b7';ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+class FallingPetal{
+  constructor(x,y){
+    this.x=x;this.y=y;this.vx=rand(-0.8,0.8);this.vy=rand(0.4,1.2);
+    this.rot=rand(0,Math.PI*2);this.rotSpeed=rand(-1.5,1.5);
+    this.size=rand(4,10);this.opacity=rand(0.5,0.9);
+    this.swF=rand(0.8,2);this.swA=rand(0.3,1);
+    this.t=0;this.c=`rgb(255,${rand(170,210)},${rand(180,220)})`;
+  }
+  update(dt){this.t+=dt;this.y+=this.vy;this.x+=this.vx+Math.sin(this.t*this.swF)*this.swA*0.3;this.rot+=this.rotSpeed*dt;this.opacity-=0.04*dt;}
+  render(ctx){
+    if(this.opacity<=0)return;
+    ctx.save();ctx.translate(this.x,this.y);ctx.rotate(this.rot);ctx.globalAlpha=this.opacity;
+    ctx.beginPath();ctx.moveTo(0,0);
+    ctx.bezierCurveTo(-this.size*0.5,-this.size,-this.size*0.3,-this.size*1.5,0,-this.size*1.8);
+    ctx.bezierCurveTo(this.size*0.3,-this.size*1.5,this.size*0.5,-this.size,0,0);
+    ctx.fillStyle=this.c;ctx.fill();ctx.restore();
+  }
+}
+
+class GlowParticle{
+  constructor(x,y,area='flower'){
+    this.x=x||rand(0,W);this.y=y||rand(0,H);this.area=area;
+    this.vx=rand(-0.4,0.4);this.vy=rand(-0.4,0.4);
+    this.size=rand(1,3);this.life=1;this.decay=rand(0.2,0.5);
+    this.color=area==='flower'?'255,200,200':'255,255,255';
+  }
+  update(dt){this.x+=this.vx;this.y+=this.vy;this.life-=this.decay*dt;}
+  render(ctx){
+    if(this.life<=0)return;
+    ctx.save();ctx.globalAlpha=this.life*0.6;
+    ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+    ctx.fillStyle=`rgb(${this.color})`;
+    ctx.shadowColor=`rgb(${this.color})`;ctx.shadowBlur=10;
+    ctx.fill();ctx.restore();
+  }
+}
+
+class Firework{
+  constructor(x,y){
+    this.x=x;this.y=y;this.particles=[];
+    const colors=['255,107,157','255,220,100','255,150,200','200,150,255','255,255,255'];
+    const c=colors[Math.floor(rand(0,colors.length))];
+    for(let i=0;i<40;i++){
+      const a=rand(0,Math.PI*2),s=rand(2,6);
+      this.particles.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,decay:rand(0.8,1.5),size:rand(2,5),color:c});
+    }
+  }
+  update(dt){
+    this.particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.05;p.vx*=0.98;p.life-=p.decay*dt;});
+    this.particles=this.particles.filter(p=>p.life>0);
+  }
+  render(ctx){
+    this.particles.forEach(p=>{
+      ctx.save();ctx.globalAlpha=p.life;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fillStyle=`rgb(${p.color})`;ctx.shadowColor=`rgb(${p.color})`;ctx.shadowBlur=15;
+      ctx.fill();ctx.restore();
+    });
+  }
+}
+
+// ==================== MAIN CONTROLLER ====================
+const flowerApp={
+  branches:[],fallingPetals:[],particles:[],fireworks:[],
+  time:0,stage:0,lastTime:0,animMode:'growth',
+  camera:{x:0,y:0,zoom:1,tx:0,ty:0,tz:1},
+  startTime:0,forcedTransition:false,
+
+  init(){
+    this.lastTime=performance.now();this.startTime=performance.now();
+    const startX=-80,startY=H+80;
+    const angle=-Math.PI/3.5+rand(-0.2,0.2);
+    const length=Math.min(W,H)*0.8;
+    this.branches.push(new Branch(startX,startY,angle,length,10,3,null,0.5));
+    this.animate();
+  },
+
+  getAllFlowers(){
+    const flowers=[];
+    const collect=b=>{b.buds.forEach(bud=>{if(bud.flower)flowers.push(bud.flower);});b.children.forEach(collect);};
+    this.branches.forEach(collect);
+    return flowers;
+  },
+
+  getAllBuds(){
+    const buds=[];
+    const collect=b=>{buds.push(...b.buds);b.children.forEach(collect);};
+    this.branches.forEach(collect);
+    return buds;
+  },
+
+  update(dt){
+    this.time+=dt;
+    const cam=this.camera;
+    cam.x+=(cam.tx-cam.x)*1.5*dt;
+    cam.y+=(cam.ty-cam.y)*1.5*dt;
+    cam.zoom+=(cam.tz-cam.zoom)*1.5*dt;
+
+    this.branches.forEach(b=>b.update(dt,this.time));
+
+    const flowers=this.getAllFlowers();
+    const bloomed=flowers.filter(f=>f.isOpen).length;
+
+    // Falling petals
+    if(this.time>8&&this.animMode!=='celebration'){
+      if(Math.random()<0.3&&flowers.length>0){
+        const f=flowers[Math.floor(rand(0,flowers.length))];
+        this.fallingPetals.push(new FallingPetal(f.x,f.y));
+      }
+    }
+    this.fallingPetals=this.fallingPetals.filter(p=>{
+      p.update(dt);
+      return p.opacity>0&&p.y<H+50;
+    });
+
+    // Ambient particles
+    if(Math.random()<0.5&&flowers.length>0){
+      const f=flowers[Math.floor(rand(0,flowers.length))];
+      const a=rand(0,Math.PI*2),d=rand(20,80);
+      this.particles.push(new GlowParticle(f.x+Math.cos(a)*d,f.y+Math.sin(a)*d,'flower'));
+    }
+    if(this.particles.length<40){
+      this.particles.push(new GlowParticle(rand(0,W),rand(0,H),'ambient'));
+    }
+    this.particles=this.particles.filter(p=>{
+      p.update(dt);
+      return p.life>0;
+    });
+
+    // Fireworks
+    this.fireworks.forEach(fw=>fw.update(dt));
+    this.fireworks=this.fireworks.filter(fw=>fw.particles.length>0);
+
+    // Stage progression
+    this.updateStages(bloomed,flowers.length);
+
+    // Timer fallback - force transition after 30 seconds
+    const elapsed=(performance.now()-this.startTime)/1000;
+    if(elapsed>30&&!this.forcedTransition&&this.animMode==='growth'&&this.stage<8){
+      this.forcedTransition=true;
+      this.stage=8;
+      gsap.to(this.camera,{tx:0,ty:0,tz:0.9,duration:4,ease:'power2.inOut'});
+      this.showText("I have something to tell you...",3000,()=>{
+        setTimeout(()=>this.transitionToProposal(),1500);
+      });
+    }
+  },
+
+  updateStages(bloomed,total){
+    if(this.animMode==='celebration')return;
+    // Lowered thresholds to ensure progression works
+    if(bloomed>=1&&this.stage===0){this.stage=1;gsap.to(this.camera,{tx:W*0.03,ty:-H*0.03,tz:1.05,duration:6,ease:'power1.inOut'});}
+    if(bloomed>=2&&this.stage===1){this.stage=2;}
+    if(bloomed>=3&&this.stage===2){this.stage=3;this.showText("I don't know exactly when it happened...",2500);}
+    if(bloomed>=5&&this.stage===3){this.stage=4;setTimeout(()=>this.showText("But somewhere along the way...",2500),3000);}
+    if(bloomed>=7&&this.stage===4){this.stage=5;setTimeout(()=>this.showText("You became my favorite person.",2500),3000);}
+    if(bloomed>=9&&this.stage===5){this.stage=6;gsap.to(this.camera,{tx:-W*0.08,ty:H*0.08,tz:1.1,duration:8,ease:'power2.inOut'});}
+    if(bloomed>=11&&this.stage===6){this.stage=7;}
+    if(bloomed>=12&&this.stage===7){
+      this.stage=8;
+      gsap.to(this.camera,{tx:0,ty:0,tz:0.9,duration:5,ease:'power2.inOut'});
+      setTimeout(()=>{
+        this.showText("I have something to tell you...",3000,()=>{
+          setTimeout(()=>this.transitionToProposal(),1500);
+        });
+      },3000);
+    }
+  },
+
+  showText(text,duration,callback){
+    const el=document.getElementById('flower-text');
+    el.textContent=text;
+    gsap.fromTo(el,
+      {opacity:0,filter:'blur(20px)',y:30},
+      {opacity:1,filter:'blur(0px)',y:0,duration:1.2,ease:'power2.out',
+        onComplete:()=>{
+          setTimeout(()=>{
+            gsap.to(el,{opacity:0,filter:'blur(10px)',duration:0.8,onComplete:callback});
+          },duration);
+        }
+      }
+    );
+  },
+
+  transitionToProposal(){
+    this.animMode='ambient';
+    gsap.to('#stage-flower',{opacity:0,duration:1.5});
+    gsap.to(canvas,{opacity:0.3,duration:2});
+    setTimeout(()=>{
+      document.getElementById('stage-question').classList.add('active');
+      gsap.fromTo('#stage-question .proposal-heart',
+        {scale:0,opacity:0},{scale:1,opacity:1,duration:1.5,ease:'elastic.out(1,0.5)'});
+      gsap.fromTo('#stage-question .text-reveal',
+        {opacity:0,y:50,filter:'blur(15px)'},{opacity:1,y:0,filter:'blur(0px)',duration:1.5,delay:0.5,ease:'power2.out'});
+      gsap.fromTo('#question-sub',{opacity:0},{opacity:1,duration:1,delay:1.5});
+      gsap.fromTo('.btn-container',{opacity:0,y:30},{opacity:1,y:0,duration:1,delay:2,ease:'power2.out'});
+      document.getElementById('question-sub').textContent="Okay... I have one question.";
+    },1500);
+  },
+
+  render(){
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    ctx.translate(W/2,H/2);
+    ctx.scale(this.camera.zoom,this.camera.zoom);
+    ctx.translate(-W/2+this.camera.x,-H/2+this.camera.y);
+    this.branches.forEach(b=>b.render(ctx,this.time));
+    this.fallingPetals.forEach(p=>p.render(ctx));
+    this.particles.forEach(p=>p.render(ctx));
+    this.fireworks.forEach(fw=>fw.render(ctx));
+    ctx.restore();
+  },
+
+  animate(){
+    const now=performance.now();
+    const dt=Math.min((now-this.lastTime)/1000,0.1);
+    this.lastTime=now;
+    this.update(dt);
+    this.render();
+    requestAnimationFrame(()=>this.animate());
+  },
+
+  spawnFirework(){
+    this.fireworks.push(new Firework(rand(W*0.2,W*0.8),rand(H*0.1,H*0.5)));
+  },
+
+  celebrate(){
+    this.animMode='celebration';
+    gsap.to(canvas,{opacity:1,duration:1});
+    gsap.to(this.camera,{tz:1.3,duration:8,ease:'power1.inOut'});
+    for(let i=0;i<15;i++){
+      setTimeout(()=>this.spawnFirework(),i*300);
+    }
+    const flowers=this.getAllFlowers();
+    flowers.forEach((f,i)=>{
+      setTimeout(()=>{
+        for(let j=0;j<8;j++){
+          const a=rand(0,Math.PI*2);
+          const p=new GlowParticle(f.x,f.y,'flower');
+          p.vx=Math.cos(a)*rand(2,5);p.vy=Math.sin(a)*rand(2,5);
+          p.size=rand(3,6);p.decay=0.3;
+          this.particles.push(p);
+        }
+      },i*50);
+    });
+    for(let i=0;i<30;i++){
+      setTimeout(()=>{
+        this.fallingPetals.push(new FallingPetal(rand(0,W),-20));
+      },i*100);
+    }
+  }
+};
+
+// ==================== INTERACTIONS ====================
+const noTexts=["Are you sure? 🥺","Think again...","Really? 😭","Nope, try again ❤️","My heart... 💔","Please? 🥺","You can't say no ❤️"];
+let noClickCount=0;
+
+function escapeNo(){
+  const btn=document.getElementById('no-btn');
+  const rect=btn.getBoundingClientRect();
+  const maxX=window.innerWidth-rect.width-40;
+  const maxY=window.innerHeight-rect.height-40;
+  const newX=rand(40,maxX);
+  const newY=rand(40,maxY);
+  gsap.to(btn,{
+    x:newX-rect.left,y:newY-rect.top,
+    rotation:rand(-15,15),scale:rand(0.8,1.1),
+    duration:0.4,ease:'power2.out'
+  });
+  btn.textContent=noTexts[noClickCount%noTexts.length];
+  noClickCount++;
+  gsap.to('.yes-btn',{x:rand(-3,3),duration:0.1,yoyo:true,repeat:3});
+}
+
+function handleYes(){
+  playCelebrationSound();
+  flowerApp.celebrate();
+  document.getElementById('stage-question').classList.remove('active');
+  document.getElementById('stage-celebration').classList.add('active');
+  const main=document.getElementById('celebration-main');
+  const sub=document.getElementById('celebration-sub');
+  main.textContent="I knew it.";
+  gsap.fromTo(main,
+    {opacity:0,scale:0.5,filter:'blur(20px)'},
+    {opacity:1,scale:1,filter:'blur(0px)',duration:1.5,ease:'power2.out'}
+  );
+  setTimeout(()=>{
+    gsap.to(main,{opacity:0,duration:1,onComplete:()=>{
+      main.textContent="You just made me the happiest person alive.";
+      gsap.fromTo(main,
+        {opacity:0,scale:0.8,filter:'blur(15px)'},
+        {opacity:1,scale:1,filter:'blur(0px)',duration:2,ease:'power2.out'}
+      );
+    }});
+  },3000);
+  setTimeout(()=>{
+    gsap.to('#stage-celebration',{opacity:0,duration:2,onComplete:()=>{
+      document.getElementById('stage-celebration').classList.remove('active');
+      document.getElementById('stage-final').classList.add('active');
+      gsap.fromTo('#stage-final .celebration-text',
+        {opacity:0,y:-50,filter:'blur(20px)'},
+        {opacity:1,y:0,filter:'blur(0px)',duration:2,ease:'power2.out'}
+      );
+      gsap.fromTo('#stage-final .text-reveal',{opacity:0},{opacity:1,duration:1.5,delay:1});
+      setTimeout(()=>{
+        document.getElementById('final-sub').textContent="Forever?";
+        gsap.fromTo('#final-sub',{opacity:0},{opacity:1,duration:1});
+        gsap.fromTo('#stage-final .yes-btn',{opacity:0,y:20},{opacity:1,y:0,duration:1,delay:0.5});
+      },2500);
+    }});
+  },7000);
+}
+
+function handleForever(){
+  playCelebrationSound();
+  flowerApp.celebrate();
+  for(let i=0;i<20;i++){
+    setTimeout(()=>flowerApp.spawnFirework(),i*200);
+  }
+  document.getElementById('stage-final').classList.remove('active');
+  document.getElementById('stage-ultimate').classList.add('active');
+  gsap.fromTo('#stage-ultimate .celebration-text',
+    {opacity:0,scale:0.3,filter:'blur(30px)'},
+    {opacity:1,scale:1,filter:'blur(0px)',duration:2.5,ease:'elastic.out(1,0.5)'}
+  );
+  let rot=0;
+  const spinCamera=()=>{
+    rot+=0.002;
+    flowerApp.camera.tx=Math.sin(rot)*50;
+    flowerApp.camera.ty=Math.cos(rot)*30;
+    if(document.getElementById('stage-ultimate').classList.contains('active')){
+      requestAnimationFrame(spinCamera);
+    }
+  };
+  spinCamera();
+}
+
+// ==================== INIT ====================
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    gsap.to('#loading-screen',{opacity:0,duration:1.5,onComplete:()=>{
+      document.getElementById('loading-screen').style.display='none';
+      document.getElementById('music-btn').classList.add('visible');
+    }});
+    flowerApp.init();
+    setTimeout(()=>{
+      document.getElementById('music-btn').style.transform='scale(1.2)';
+      setTimeout(()=>document.getElementById('music-btn').style.transform='scale(1)',300);
+    },3000);
+  },2000);
+});
+
+document.addEventListener('mousemove',(e)=>{
+  if(flowerApp.animMode==='growth'){
+    const mx=(e.clientX/W-0.5)*20;
+    const my=(e.clientY/H-0.5)*20;
+    flowerApp.camera.tx+=(mx-flowerApp.camera.tx)*0.02;
+    flowerApp.camera.ty+=(my-flowerApp.camera.ty)*0.02;
+  }
+});
+</script>
+</body>
+</html>
